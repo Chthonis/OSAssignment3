@@ -57,7 +57,7 @@ int __init numpipe_init(void)
     mutex_init(&mutex);
   
   }
-  fifoBuffer = kmalloc(sizeof(char*)*10,GFP_KERNEL);
+  fifoBuffer = kmalloc(sizeof(char*)*N,GFP_KERNEL);
   if(!fifoBuffer)
   {
     printk(KERN_ALERT "Error kmallocing buf\n");
@@ -79,7 +79,6 @@ ssize_t my_read(struct file *filep, char *buf, size_t count, loff_t *fpos)
   int ctu = 0;
   int readingVal;
   int retFull;
-  int retEmpty;
   int retMutex;
 
   retFull = down_interruptible(&full);
@@ -113,23 +112,21 @@ ssize_t my_read(struct file *filep, char *buf, size_t count, loff_t *fpos)
   }
   else {
     printk(KERN_ALERT "Failed to copy to user\n");
-    //mutex_unlock(&mutex);
-    //up(&empty);
+    mutex_unlock(&mutex);
+    up(&empty);
     return -EFAULT;
   }
 
   mutex_unlock(&mutex);
   up(&empty);
   //consume item
-  return readingVal;
+  return count;//readingVal;
 }
 
 //========================================================_Write_========================================================
 ssize_t my_write( struct file *filep, const char *buf, size_t count, loff_t *fpos)
 {
   int cfu = 0;
-  int writingVal;
-  int retFull;
   int retEmpty;
   int retMutex;
   //produce item
